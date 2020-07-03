@@ -1,5 +1,5 @@
 # ewwwil_sniffer
-Simple packet sniffer written in C for educational purposes
+Simple packet sniffer for educational purposes written in C
 ```text
 |=============================================================================================================================|
 | Switch |     Arguments     | Description                                                                                    |
