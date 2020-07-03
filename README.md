@@ -19,7 +19,28 @@ Simple packet sniffer for educational purposes written in C
 |=============================================================================================================================|
 ```
 
-**Example**
+**Example command**
 ```
-./ewwwil_sniffer -Sd RAW -I 10.20.30.40 -Sd IP -dIP 40.30.20.10
+./ewwwil_sniffer -I 10.20.30.40 -Sd IP -dIP 40.30.20.10
+```
+
+**Example output**
+```
+|=================================|
+| IPV4                            |
+|---------------------------------|
+| Version      : 4                |
+| IHL          : 5     DWORDS     |
+| DSCP         : 0                |
+| ECN          : 0                |
+| Total Length : 154   Bytes      |
+| ID           : 10793            |
+| Flags        : 0                |
+| Frag. Offset : 0                |
+| TTL          : 1                |
+| Protocol     : 17               |
+| CRC          : 33068            |
+| Src IP       : 10.20.30.40      |
+| Dst IP       : 40.30.20.10      |
+|=================================|
 ```
