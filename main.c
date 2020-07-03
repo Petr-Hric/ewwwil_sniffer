@@ -122,7 +122,7 @@ int sniffer_main(int argc, char **argv) {
     int retv = 0;
 
     // Create socket which will be receiving all the packets going through the selected interface
-    Socket socket = socket_setup(g_config.interface_ip);
+    Socket socket = socket_setup(g_config.interfaceIp);
     if(S_INVALID_SOCKET == socket) {
         retv = -1;
     } else {
@@ -167,6 +167,9 @@ size_t get_ipv4_size(const uint8_t *data, const size_t size);
 size_t get_ipv4_opt_size(const uint8_t *data, const size_t size);
 int get_ipv6(const uint8_t *networkIPv6Address, char *output, const size_t size);
 
+size_t tcpByteCount = 0;
+size_t udpByteCount = 0;
+
 int satisfy_arguments(const uint8_t *data, const size_t size) {
     assert(NULL != data);
 
@@ -180,15 +183,15 @@ int satisfy_arguments(const uint8_t *data, const size_t size) {
         case 0x04:
         {
             const ip_header *const header = (const ip_header *)ipHeader;
-            if(g_config.destination_ip_set) {
-                if(*((const uint32_t *)g_config.destination_ip_n) != header->dstaddr) {
+            if(g_config.destinationIpSet) {
+                if(*((const uint32_t *)g_config.destinationIpNet) != header->dstaddr) {
                     free_ip_header(&ipHeader, ipVersion);
                     return 0;
                 }
             }
 
-            if(g_config.source_ip_set) {
-                if(*((const uint32_t *)g_config.source_ip_n) != header->srcaddr) {
+            if(g_config.sourceIpSet) {
+                if(*((const uint32_t *)g_config.sourceIpNet) != header->srcaddr) {
                     free_ip_header(&ipHeader, ipVersion);
                     return 0;
                 }
@@ -198,21 +201,21 @@ int satisfy_arguments(const uint8_t *data, const size_t size) {
         case 0x06:
         {
             const ip6_header *const header = (const ip6_header *)ipHeader;
-            if(g_config.destination_ip_set) {
+            if(g_config.destinationIpSet) {
                 if(0 != memcmp(
-                    g_config.destination_ip_n
+                    g_config.destinationIpNet
                     , header->dstaddr
-                    , sizeof(g_config.destination_ip_n))) {
+                    , sizeof(g_config.destinationIpNet))) {
                     free_ip_header(&ipHeader, ipVersion);
                     return 0;
                 }
             }
 
-            if(g_config.source_ip_set) {
+            if(g_config.sourceIpSet) {
                 if(0 != memcmp(
-                    g_config.source_ip_n
+                    g_config.sourceIpNet
                     , header->srcaddr
-                    , sizeof(g_config.source_ip_n))) {
+                    , sizeof(g_config.sourceIpNet))) {
                     free_ip_header(&ipHeader, ipVersion);
                     return 0;
                 }
@@ -271,25 +274,54 @@ int satisfy_arguments(const uint8_t *data, const size_t size) {
 
         assert(ipDataOffset <= size);
 
+        const size_t ipProtocolDataSize = size - ipDataOffset;
+
         switch(ipProtocol) {
             case IPProtoE_TCP:
             {
+                if(g_config.showByteCount) {
+                    assert(NULL != ipProtocolData);
+                    assert((((const tcp_header *)ipProtocolData)->data_offset * sizeof(uint32_t)) < ipProtocolDataSize);
+                    tcpByteCount += ipProtocolDataSize - (((const tcp_header *)ipProtocolData)->data_offset * sizeof(uint32_t));
+
+                    printf("\n");
+                    printf("|========================|\n");
+                    printf("| TCP                    |\n");
+                    printf("|------------------------|\n");
+                    printf("| Byte count: %-10zu |\n", tcpByteCount);
+                    printf("|========================|\n");
+                }
+
                 if(g_config.showTCPHeader) {
-                    buffer_print_tcp_header(data + ipDataOffset, size - ipDataOffset, (const tcp_header *)ipProtocolData);
+                    buffer_print_tcp_header(data + ipDataOffset, ipProtocolDataSize, (const tcp_header *)ipProtocolData);
                 }
             }
             break;
             case IPProtoE_UDP:
             {
+                if(g_config.showByteCount) {
+                    assert(NULL != ipProtocolData);
+                    assert(sizeof(udp_header) < ipProtocolDataSize);
+                    udpByteCount += ipProtocolDataSize - sizeof(udp_header);
+
+                    printf("\n");
+                    printf("|========================|\n");
+                    printf("| TCP                    |\n");
+                    printf("|------------------------|\n");
+                    printf("| Byte count: %-10zu |\n", udpByteCount);
+                    printf("|========================|\n");
+                }
+
                 if(g_config.showUDPHeader) {
-                    buffer_print_udp_header(data + ipDataOffset, size - ipDataOffset, (const udp_header *)ipProtocolData);
+                    buffer_print_udp_header(data + ipDataOffset, ipProtocolDataSize, (const udp_header *)ipProtocolData);
                 }
             }
             break;
             case IPProtoE_ICMP:
             {
+                assert(NULL != ipProtocolData);
                 if(g_config.showICMPHeader) {
-                    buffer_print_icmp_header(data + ipDataOffset, size - ipDataOffset, (const icmp_header *)ipProtocolData);
+                    buffer_print_icmp_header(data + ipDataOffset, ipProtocolDataSize, (const icmp_header *)ipProtocolData);
                 }
             }
             break;
@@ -354,19 +386,19 @@ int args_process(int argc, char **argv) {
 
                         ++argv;
 
-                        if(strlen(argv[0]) >= sizeof(g_config.interface_ip)) {
+                        if(strlen(argv[0]) >= sizeof(g_config.interfaceIp)) {
                             LOG_ERROR("Interface IP arg is too long\n");
                             return -1;
                         }
 
-                        strcpy(g_config.interface_ip, argv[0]);
+                        strcpy(g_config.interfaceIp, argv[0]);
 
-                        g_config.interface_ip_set = true;
+                        g_config.interfaceIpSet = true;
 
                         ++argv;
 
                         break;
-                    case 's': // Source address is:
+                    case 's':
                         if(strlen(argv[0]) > 2 && argv[0][2] == 'P') {
                             if(argsEnd == (argv + 1)) {
                                 LOG_ERROR("Source port expected\n");
@@ -375,18 +407,18 @@ int args_process(int argc, char **argv) {
 
                             ++argv;
 
-                            if(1 != sscanf(argv[0], " %"SCNo16, &g_config.source_port)) {
+                            if(1 != sscanf(argv[0], " %"SCNo16, &g_config.sourcePort)) {
                                 LOG_ERROR("Incorrect source port format\n");
                                 return -1;
                             }
 
                             endian_convert(
-                                &g_config.source_port
-                                , &g_config.source_port
+                                &g_config.sourcePort
+                                , &g_config.sourcePort
                                 , EndianE_Big
-                                , sizeof(g_config.source_port));
+                                , sizeof(g_config.sourcePort));
 
-                            g_config.source_port_set = true;
+                            g_config.sourcePortSet = true;
                         } else if(strlen(argv[0]) > 3 && argv[0][2] == 'I' && argv[0][3] == 'P') {
                             if(argsEnd == (argv + 1)) {
                                 LOG_ERROR("Source IP address expected\n");
@@ -395,22 +427,22 @@ int args_process(int argc, char **argv) {
 
                             ++argv;
 
-                            if(strlen(argv[0]) >= sizeof(g_config.source_ip)) {
+                            if(strlen(argv[0]) >= sizeof(g_config.sourceIp)) {
                                 LOG_ERROR("Source IP arg is too long\n");
                                 return -1;
                             }
 
-                            strcpy(g_config.source_ip, argv[0]);
+                            strcpy(g_config.sourceIp, argv[0]);
 
                             if(0 != get_network_address(
-                                g_config.source_ip
-                                , g_config.source_ip_n
-                                , sizeof(g_config.source_ip_n)
-                                , &g_config.source_ip_ver)) {
+                                g_config.sourceIp
+                                , g_config.sourceIpNet
+                                , sizeof(g_config.sourceIpNet)
+                                , &g_config.sourceIpVer)) {
                                 return -1;
                             }
 
-                            g_config.source_ip_set = true;
+                            g_config.destinationIpSet = true;
                         } else {
                             LOG_ERROR("Unknown switch extension\n");
                             return -1;
@@ -419,7 +451,7 @@ int args_process(int argc, char **argv) {
                         ++argv;
 
                         break;
-                    case 'd': // Destination address is:
+                    case 'd':
                         if(strlen(argv[0]) > 2 && argv[0][2] == 'P') {
                             if(argsEnd == (argv + 1)) {
                                 LOG_ERROR("Destination port expected\n");
@@ -428,18 +460,18 @@ int args_process(int argc, char **argv) {
 
                             ++argv;
 
-                            if(1 != sscanf(argv[0], " %"SCNo16, &g_config.destination_port)) {
+                            if(1 != sscanf(argv[0], " %"SCNo16, &g_config.destinationPort)) {
                                 LOG_ERROR("Incorrect destination port format\n");
                                 return -1;
                             }
 
                             endian_convert(
-                                &g_config.destination_port_set
-                                , &g_config.destination_port_set
+                                &g_config.destinationPortSet
+                                , &g_config.destinationPortSet
                                 , EndianE_Big
-                                , sizeof(g_config.destination_port_set));
+                                , sizeof(g_config.destinationPortSet));
 
-                            g_config.destination_port_set = true;
+                            g_config.destinationPortSet = true;
                         } else if(strlen(argv[0]) > 3 && argv[0][2] == 'I' && argv[0][3] == 'P') {
                             if(argsEnd == (argv + 1)) {
                                 LOG_ERROR("Destination IP address expected\n");
@@ -448,22 +480,22 @@ int args_process(int argc, char **argv) {
 
                             ++argv;
 
-                            if(strlen(argv[0]) >= sizeof(g_config.destination_ip)) {
+                            if(strlen(argv[0]) >= sizeof(g_config.destinationIp)) {
                                 LOG_ERROR("Destination IP arg is too long\n");
                                 return -1;
                             }
 
-                            strcpy(g_config.destination_ip, argv[0]);
+                            strcpy(g_config.destinationIp, argv[0]);
 
                             if(0 != get_network_address(
-                                g_config.destination_ip
-                                , g_config.destination_ip_n
-                                , sizeof(g_config.destination_ip_n)
-                                , &g_config.destination_ip_ver)) {
+                                g_config.destinationIp
+                                , g_config.destinationIpNet
+                                , sizeof(g_config.destinationIpNet)
+                                , &g_config.destinationIpVer)) {
                                 return -1;
                             }
 
-                            g_config.destination_ip_set = true;
+                            g_config.destinationIpSet = true;
                         } else {
                             LOG_ERROR("Unknown switch extension\n");
                             return -1;
@@ -472,17 +504,18 @@ int args_process(int argc, char **argv) {
                         ++argv;
 
                         break;
-                    case 'B':
-                        g_config.byte_count = true;
-
-                        ++argv;
-                        break;
                     case 'S':
                     {
                         bool detail = false;
                         if(strlen(argv[0]) > 2) {
                             if(argv[0][2] == 'd') {
                                 detail = true;
+                            } else if(argv[0][2] == 'B') {
+                                g_config.showByteCount = true;
+
+                                ++argv;
+
+                                break;
                             }
                         }
 
@@ -514,15 +547,15 @@ int args_process(int argc, char **argv) {
                         }
 
                         ++argv;
-
-                        break;
                     }
+                    break;
                     default:
                         LOG_ERROR("Unknown switch \'%s\'\n", argv[0]);
                         return -1;
                 }
                 break;
             case '?':
+                printf("\n");
                 printf("|=============================================================================================================================|\n");
                 printf("| Switch |     Arguments     | Description                                                                                    |\n");
                 printf("|-----------------------------------------------------------------------------------------------------------------------------|\n");
@@ -532,7 +565,7 @@ int args_process(int argc, char **argv) {
                 printf("| -sP      <Port>            | Filter packets according to source port (only for protocols using ports)                       |\n");
                 printf("| -dIP     <IP>              | Filter packets according to destination IP                                                     |\n");
                 printf("| -dP      <Port>            | Filter packets according to destination port (only for protocols using ports)                  |\n");
-                printf("| -B                         | Shows number of Bytes send to destination IP (destination IP must be set)                      |\n");
+                printf("| -SB                        | Shows number of Bytes send to destination IP (destination IP must be set)                      |\n");
                 printf("| -S       <Protocol>        | Shows data for selected protocol (RAW can be set for raw data)                                 |\n");
                 printf("| -Sd      <Protocol>        | Shows detailed data for selected protocol (RAW can be set for raw data + ASCII representation) |\n");
                 printf("|=============================================================================================================================|\n");
@@ -542,8 +575,9 @@ int args_process(int argc, char **argv) {
         }
     }
 
-    if(g_config.interface_ip_set
-        && ((g_config.showRawData)
+    if(g_config.interfaceIpSet
+        && ((g_config.showByteCount)
+        || (g_config.showRawData)
         || (g_config.showIPHeader)
         || (g_config.showTCPHeader)
         || (g_config.showUDPHeader)
@@ -946,13 +980,9 @@ tcp_header *parse_tcp_header(const uint8_t *data, const size_t size) {
         return NULL;
     }
 
-    header->src_port = *(const uint16_t *)(data);
-    header->dst_port = *(const uint16_t *)(data += sizeof(header->src_port));
-    header->sequence = *(const uint32_t *)(data += sizeof(header->dst_port));
-    header->acknowledge = *(const uint32_t *)(data += sizeof(header->sequence));
-    header->data_offset = (*(const uint8_t *)(data += sizeof(header->acknowledge))) >> 4;
+    memcpy(header, data, sizeof(tcp_header));
 
-    return NULL;
+    return header;
 }
 
 udp_header *parse_udp_header(const uint8_t *data, const size_t size) {
@@ -968,10 +998,7 @@ udp_header *parse_udp_header(const uint8_t *data, const size_t size) {
         return NULL;
     }
 
-    header->src_port = *(const uint16_t *)(data);
-    header->dst_port = *(const uint16_t *)(data += sizeof(header->src_port));
-    header->length = *(const uint16_t *)(data += sizeof(header->dst_port));
-    header->crc = *(const uint16_t *)(data += sizeof(header->length));
+    memcpy(header, data, sizeof(udp_header));
 
     return header;
 }
@@ -989,9 +1016,7 @@ icmp_header *parse_icmp_header(const uint8_t *data, const size_t size) {
         return NULL;
     }
 
-    header->type = *(data);
-    header->code = *(data += sizeof(header->type));
-    header->crc = *(const uint16_t *)(data += sizeof(header->code));
+    memcpy(header, data, sizeof(icmp_header));
 
     return header;
 }
@@ -1073,16 +1098,19 @@ void *parse_ip_header(const uint8_t *data, const size_t size, uint8_t *version) 
         case IPProtoE_TCP:
         {
             *ipSubProtocolHeader = (void *)parse_tcp_header(data + offset, size - offset);
+            assert(NULL != *ipSubProtocolHeader);
         }
         break;
         case IPProtoE_UDP:
         {
             *ipSubProtocolHeader = (void *)parse_udp_header(data + offset, size - offset);
+            assert(NULL != *ipSubProtocolHeader);
         }
         break;
         case IPProtoE_ICMP:
         {
             *ipSubProtocolHeader = (void *)parse_icmp_header(data + offset, size - offset);
+            assert(NULL != *ipSubProtocolHeader);
         }
         break;
         default:

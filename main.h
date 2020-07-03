@@ -30,9 +30,9 @@ typedef enum {
 }Endian;
 
 typedef struct {
-    char interface_ip[40];
-    bool interface_ip_set;
-    bool byte_count;
+    char interfaceIp[40];
+    bool interfaceIpSet;
+    bool showByteCount;
     bool showRawData;
     bool showRawDataDetail;
     size_t showRawDataBytesPerLine;
@@ -45,20 +45,20 @@ typedef struct {
     bool showICMPHeader;
     bool showICMPHeaderDetail;
 
-    char source_ip[40];
-    bool source_ip_set;
-    uint8_t source_ip_ver;
-    uint8_t source_ip_n[16];
+    char sourceIp[40];
+    bool sourceIpSet;
+    uint8_t sourceIpVer;
+    uint8_t sourceIpNet[16];
 
-    char destination_ip[40];
-    bool destination_ip_set;
-    uint8_t destination_ip_ver;
-    uint8_t destination_ip_n[16];
+    char destinationIp[40];
+    bool destinationIpSet;
+    uint8_t destinationIpVer;
+    uint8_t destinationIpNet[16];
 
-    uint16_t source_port;
-    bool source_port_set;
-    uint16_t destination_port;
-    bool destination_port_set;
+    uint16_t sourcePort;
+    bool sourcePortSet;
+    uint16_t destinationPort;
+    bool destinationPortSet;
 
 }Config;
 
