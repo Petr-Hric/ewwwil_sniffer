@@ -26,6 +26,16 @@ Simple packet sniffer for educational purposes written in C
 
 **Example output**
 ```
+Raw packet [0154 Bytes]
+45 00 00 9A 2A 29 00 00 01 11 81 2C 0A AA 13 5A EF FF FF FA | E..............Z....
+E1 14 07 6C 00 86 DA D9 4D 2D 53 45 41 52 43 48 20 2A 20 48 | ...l....M.SEARCH...H
+54 54 50 2F 31 2E 31 0D 0A 48 4F 53 54 3A 20 32 33 39 2E 32 | TTP.1.1..HOST..239.2
+35 35 2E 32 35 35 2E 32 35 30 3A 31 39 30 30 0D 0A 4D 41 4E | 55.255.250.1900..MAN
+3A 20 22 73 73 64 70 3A 64 69 73 63 6F 76 65 72 22 0D 0A 4D | ...ssdp.discover...M
+58 3A 20 31 0D 0A 53 54 3A 20 75 72 6E 3A 64 69 61 6C 2D 6D | X..1..ST..urn.dial.m
+75 6C 74 69 73 63 72 65 65 6E 2D 6F 72 67 3A 73 65 72 76 69 | ultiscreen.org.servi
+63 65 3A 64 69 61 6C 3A 31 0D 0A 0D 0A 00                   | ce.dial.1.....
+
 |=================================|
 | IPV4                            |
 |---------------------------------|
@@ -40,7 +50,7 @@ Simple packet sniffer for educational purposes written in C
 | TTL          : 1                |
 | Protocol     : 17               |
 | CRC          : 33068            |
-| Src IP       : 10.20.30.40      |
-| Dst IP       : 40.30.20.10      |
+| Src IP       : 10.170.19.90     |
+| Dst IP       : 239.255.255.250  |
 |=================================|
 ```
