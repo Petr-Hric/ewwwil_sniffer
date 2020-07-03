@@ -1,5 +1,6 @@
 # ewwwil_sniffer
 Simple packet sniffer written in C for educational purposes
+<pre>
 |=============================================================================================================================|
 | Switch |     Arguments     | Description                                                                                    |
 |-----------------------------------------------------------------------------------------------------------------------------|
@@ -13,3 +14,4 @@ Simple packet sniffer written in C for educational purposes
 | -S       <Protocol>        | Shows data for selected protocol (RAW can be set for raw data)                                 |
 | -Sd      <Protocol>        | Shows detailed data for selected protocol (RAW can be set for raw data + ASCII representation) |
 |=============================================================================================================================|
+</pre>
