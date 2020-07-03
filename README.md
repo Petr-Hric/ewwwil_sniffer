@@ -1,5 +1,7 @@
 # ewwwil_sniffer
 Simple packet sniffer for educational purposes written in C
+- Supports Windows only (it is compilable for Linux, but it is not working correctly yet)
+
 ```text
 |=============================================================================================================================|
 | Switch |     Arguments     | Description                                                                                    |
