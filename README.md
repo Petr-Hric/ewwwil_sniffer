@@ -1,4 +1,7 @@
 # ewwwil_sniffer
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/0a994432c7e14beea278c267a3108bbe)](https://app.codacy.com/manual/Petr-Hric/ewwwil_sniffer?utm_source=github.com&utm_medium=referral&utm_content=Petr-Hric/ewwwil_sniffer&utm_campaign=Badge_Grade_Dashboard)
+
 Simple packet sniffer for educational purposes written in C
 - Supports Windows only (it is compilable for Linux, but it is not working correctly yet)
 - You need to have sufficient privileges to run this code, because it uses RAW sockets
