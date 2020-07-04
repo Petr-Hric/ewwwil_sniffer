@@ -23,12 +23,12 @@ Simple packet sniffer for educational purposes written in C
 ```
 
 **Example command**
-```
+```text
 ./ewwwil_sniffer -I 10.20.30.40 -Sd IP -dIP 40.30.20.10
 ```
 
 **Example output**
-```
+```text
 Raw packet [0154 Bytes]
 45 00 00 9A 2A 29 00 00 01 11 81 2C 0A AA 13 5A EF FF FF FA | E..............Z....
 E1 14 07 6C 00 86 DA D9 4D 2D 53 45 41 52 43 48 20 2A 20 48 | ...l....M.SEARCH...H
